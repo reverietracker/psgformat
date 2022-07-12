@@ -45,4 +45,34 @@ function readPSG(buffer) {
     return frames;
 }
 
-module.exports = { readPSG };
+function writePSG(stream, frames) {
+    stream.write('PSG\x1a\0\0\0\0\0\0\0\0\0\0\0\0', 'latin1');
+    let endMarkerCount = 0;
+    const flushEndMarkers = () => {
+        while (endMarkerCount > 1020) {
+            stream.write(Buffer.from([0xfe, 0xff]));
+            endMarkerCount -= 1020;
+        }
+        if (endMarkerCount >= 4) {
+            stream.write(Buffer.from([0xfe, endMarkerCount >> 2]));
+            endMarkerCount &= 0x03;
+        }
+        while(endMarkerCount > 0) {
+            stream.write(Buffer.from([0xff]));
+            endMarkerCount--;
+        }
+        endMarkerCount = 0;
+    }
+    frames.forEach(frame => {
+        if (frame.length) {
+            flushEndMarkers();
+            frame.forEach(regWrite => {
+                stream.write(Buffer.from(regWrite));
+            });
+        }
+        endMarkerCount++;
+    });
+    flushEndMarkers();
+}
+
+module.exports = { readPSG, writePSG };

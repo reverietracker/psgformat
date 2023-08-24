@@ -14,27 +14,27 @@ function readPSG(buffer) {
 
     while ((!eof) || waitFrames) {
         if (waitFrames) {
-        frames.push([]);
-        waitFrames--;
+            frames.push([]);
+            waitFrames--;
         } else {
         // read all commands for frame
         while (true) {
             if (pos == buffer.length) {
-            eof = true;
+                eof = true;
             break;
             }
 
             let cmd = buffer.readUInt8(pos++);
             if (cmd == 0xfd) {
-            eof = true;
-            break;
+                eof = true;
+                break;
             } else if (cmd == 0xff) {
-            break;
+                break;
             } else if (cmd == 0xfe) {
-            waitFrames = (buffer.readUInt8(pos++) * 4) - 1;
-            break;
+                waitFrames = (buffer.readUInt8(pos++) * 4) - 1;
+                break;
             } else {
-            regWrites.push([cmd, buffer.readUInt8(pos++)]);
+                regWrites.push([cmd, buffer.readUInt8(pos++)]);
             }
         }
         frames.push(regWrites);
